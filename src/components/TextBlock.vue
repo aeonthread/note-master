@@ -162,11 +162,15 @@ h2,
 h3,
 h4,
 h5 {
-  display: inline-block;
 }
 .editor {
-  min-height: 20px;
+  width: 100%;
   white-space: pre-wrap;
-  background-color: rgb(255, 247, 207);
+  line-break: loose;
+  overflow-x: hidden;
+  word-wrap: break-word;
+  display: block;
+  min-height: 20px;
+  background-color: whitesmoke;
 }
 </style>
