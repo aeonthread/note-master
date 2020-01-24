@@ -30,23 +30,33 @@ export default {
       let free;
       let textfree;
       let master = document.createElement('div');
+      let id;
+      let length;
       snapshot.forEach(item => {
         el = document.createElement(item.command);
         text = document.createTextNode(item.text);
-        free = document.createElement('span');
-        textfree = document.createTextNode(' ');
         el.appendChild(text);
-        free.appendChild(textfree);
-        free.id = 'id-' + uuidv1();
+        el.id = 'id-' + uuidv1();
         master.appendChild(el);
-        master.appendChild(free);
+        if (item.command.indexOf('h') == -1) {
+          free = document.createElement('span');
+          textfree = document.createTextNode(' ');
+          free.appendChild(textfree);
+          free.id = 'id-' + uuidv1();
+          master.appendChild(free);
+          id = free.id;
+          length = free.textContent.length;
+        } else {
+          id = el.id;
+          length = el.textContent.length;
+        }
       });
       if (node.className == 'editor') {
         node.innerHTML = master.innerHTML;
-        this.setPos(free.id, free.textContent.length);
+        this.setPos(id, length);
       } else {
         node.outerHTML = master.innerHTML;
-        this.setPos(free.id, free.textContent.length);
+        this.setPos(id, length);
       }
     },
     getSnapshot(raw, node) {
@@ -162,14 +172,17 @@ h2,
 h3,
 h4,
 h5 {
+  line-height: 0rem;
 }
+
 .editor {
+  margin: 0;
+  padding: 0;
   width: 100%;
   white-space: pre-wrap;
   line-break: loose;
   overflow-x: hidden;
   word-wrap: break-word;
-  display: block;
   min-height: 20px;
   background-color: whitesmoke;
 }
