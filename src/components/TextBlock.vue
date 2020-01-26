@@ -12,51 +12,64 @@ export default {
   data() {
     return {
       html: '',
-      currentText: '',
+      arrayOfWords: '',
+      node: '',
+      space: '',
+      spaceText: '',
+      el: '',
+      elText: '',
+      container: '',
       id: '',
-      index: {
-        lines: 0,
-        snapshot: [{}]
-      }
+      length: 0,
+      currentText: ''
     };
   },
   methods: {
     tab() {
-      let node = this.getSelectionElement();
-      let raw = node.firstChild.textContent.split(' ');
-      let snapshot = this.getSnapshot(raw, node);
-      let el;
-      let text;
-      let free;
-      let textfree;
-      let master = document.createElement('div');
-      let id;
-      let length;
-      snapshot.forEach(item => {
-        el = document.createElement(item.command);
-        text = document.createTextNode(item.text);
-        el.appendChild(text);
-        el.id = 'id-' + uuidv1();
-        master.appendChild(el);
-        if (item.command.indexOf('h') == -1) {
-          free = document.createElement('span');
-          textfree = document.createTextNode(' ');
-          free.appendChild(textfree);
-          free.id = 'id-' + uuidv1();
-          master.appendChild(free);
-          id = free.id;
-          length = free.textContent.length;
-        } else {
-          id = el.id;
-          length = el.textContent.length;
-        }
+      /* ------------------------- get current node of DOM ------------------------ */
+      this.node = this.getSelectionElement();
+      /* ------------------- parse array of words base on space between each word ------------------- */
+      this.arrayOfWords = this.getArrayOfWords();
+      /* ------------------- returns object of command and words ------------------ */
+      this.snapshot = this.getSnapshot(this.arrayOfWords, this.node);
+      /* --------------------- creates html div for container --------------------- */
+      this.container = document.createElement('div');
+      /* -------------- iterates over all words and creates new html -------------- */
+      this.snapshot.forEach(item => {
+        this.el = document.createElement(item.command);
+        this.elText = document.createTextNode(item.text);
+        this.el.appendChild(this.elText);
+        this.el.id = 'id-' + uuidv1();
+        this.container.appendChild(this.el);
+        this.getIdAndLengthOfWord(item);
       });
-      if (node.className == 'editor') {
-        node.innerHTML = master.innerHTML;
-        this.setPos(id, length);
+      /* ------------------------ update DOM with new html ------------------------ */
+      this.syncDom();
+    },
+    syncDom() {
+      if (this.node.className == 'editor') {
+        this.node.innerHTML = this.container.innerHTML;
+        this.setPos(this.id, this.length);
       } else {
-        node.outerHTML = master.innerHTML;
-        this.setPos(id, length);
+        this.node.outerHTML = this.container.innerHTML;
+        this.setPos(this.id, this.length);
+      }
+    },
+    getArrayOfWords() {
+      return this.node.firstChild.textContent.split(' ');
+    },
+    getIdAndLengthOfWord(item) {
+      if (item.command.indexOf('h') == -1) {
+        this.space = document.createElement('span');
+        this.spaceText = document.createTextNode(' ');
+        this.space.appendChild(this.spaceText);
+        this.space.id = 'id-' + uuidv1();
+        this.container.appendChild(this.space);
+        this.id = this.space.id;
+        this.length = this.space.textContent.length;
+      } else {
+        this.id = this.el.id;
+        this.length = this.el.textContent.length;
       }
     },
     getSnapshot(raw, node) {
@@ -78,17 +91,6 @@ export default {
         snapshot[i] = { text: item, command: command };
       });
       return snapshot;
-    },
-    getCaretPosOffset(node) {
-      if (node.className == 'editor') {
-        return 0;
-      } else {
-        return 0;
-      }
-    },
-    getCurrentContext() {
-      let editor = this.$refs.ed;
-      this.index.lines = editor.childNodes.length;
     },
     getSelectionElement() {
       var selection = window.getSelection();
@@ -112,10 +114,6 @@ export default {
       }
       return 'empty array';
     },
-    updateDOM(new_html, e) {
-      this.html = new_html;
-      e.target.innerHTML = new_html;
-    },
     getInput(e) {
       this.html = e.target.innerHTML;
     },
@@ -130,32 +128,6 @@ export default {
       var sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
-    },
-    getPos(element) {
-      var doc = element.ownerDocument || element.document;
-      var win = doc.defaultView || doc.parentWindow;
-      var sel;
-      if (typeof win.getSelection != 'undefined') {
-        sel = win.getSelection();
-        if (sel.rangeCount > 0) {
-          var range = win.getSelection().getRangeAt(0);
-          var preCaretRange = range.cloneRange();
-          preCaretRange.selectNodeContents(element);
-          preCaretRange.setEnd(range.startContainer, range.startOffset);
-          this.pos.start = preCaretRange.toString().length;
-          preCaretRange.setEnd(range.endContainer, range.endOffset);
-          this.pos.end = preCaretRange.toString().length;
-        }
-      } else if ((sel = doc.selection) && sel.type != 'Control') {
-        var textRange = sel.createRange();
-        var preCaretTextRange = doc.body.createTextRange();
-        preCaretTextRange.moveToElementText(element);
-        preCaretTextRange.setEndPoint('EndToStart', textRange);
-        this.pos.start = preCaretTextRange.text.length;
-        preCaretTextRange.setEndPoint('EndToEnd', textRange);
-        this.pos.end = preCaretTextRange.text.length;
-      }
-      return { start: this.pos.start, end: this.pos.end };
     }
   },
   beforeDestroy() {
